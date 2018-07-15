@@ -8,9 +8,7 @@ with open(sys.argv[1], 'r') as readFile:
         if(not line[0] == '>'):
             seq += line.rstrip("\n")
 
-
 length = len(seq)
-k = 4
 out = wave.open("read.wav", "wb")
 
 out.setframerate(44100)
@@ -18,17 +16,26 @@ out.setnchannels(1)
 out.setsampwidth(2)
 
 
-def km2level(kmer):
-    convert = {'A': 0, 'C': 1, 'G': 2, 'T': 3, 'N': 0}
-    value = 0
-    for i, n in enumerate(kmer):
-        value += convert[n]**i
-    level = bytes([value])
-#    print(level)
-    return(level)
+def nc2level(nucleotide, byte_value):
+    convert = {'A':-10, 'C': -5, 'G': 5, 'T': 10}
+    incremnt = 0
+    if nucleotide in convert:
+        increment = convert[nucleotide]
+
+    value = (int.from_bytes(byte_value, byteorder='big') + increment) %256
+    return(value.to_bytes(1, byteorder='big'))
 
 
-for i in range(length//k):
-    waveData = km2level(seq[i*k:i*k + k])
+time = 10
+maxFrame = time * 44100
+level = (127).to_bytes(1, byteorder='big')
+frames = 0
+for nc in seq:
+    waveData = nc2level(nc,level)
+#    print(int.from_bytes(waveData, byteorder = 'big'))
     out.writeframes(waveData)
+    out.writeframes(waveData)
+    frames += 1
+    if(frames >= maxFrame):
+    	break
 out.close()
